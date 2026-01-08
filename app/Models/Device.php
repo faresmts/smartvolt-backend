@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Device extends Model
 {
@@ -21,6 +22,9 @@ class Device extends Model
         'user_id',
         'group_id',
         'key',
+        'is_on',
+        'voltage',
+        'consumption',
     ];
 
     /**
@@ -37,5 +41,21 @@ class Device extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(Group::class);
+    }
+
+    /**
+     * Get all of the device's usage goals.
+     */
+    public function usageGoals(): MorphMany
+    {
+        return $this->morphMany(UsageGoal::class, 'goalable');
+    }
+
+    /**
+     * Get all of the device's routines.
+     */
+    public function routines(): MorphMany
+    {
+        return $this->morphMany(Routine::class, 'targetable');
     }
 }

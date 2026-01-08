@@ -79,4 +79,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Group::class);
     }
+
+    /**
+     * Get the usage goals for the user.
+     */
+    public function usageGoals(): HasMany
+    {
+        return $this->hasMany(UsageGoal::class);
+    }
+
+    /**
+     * Get the routines for the user.
+     */
+    public function routines(): HasMany
+    {
+        return $this->hasMany(Routine::class);
+    }
 }

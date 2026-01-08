@@ -18,7 +18,7 @@ class DeviceFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->word(),
+            'name' => 'Test Device Name',
             'key' => Str::random(10),
         ];
     }
