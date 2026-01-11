@@ -2,8 +2,13 @@
 
 use App\Models\User;
 use Laravel\Fortify\Features;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
 
 uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+});
 
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));

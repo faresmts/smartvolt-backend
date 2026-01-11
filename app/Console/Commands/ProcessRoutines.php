@@ -34,7 +34,7 @@ class ProcessRoutines extends Command
 
         foreach ($routines as $routine) {
             $cron = new CronExpression($routine->cron_expression);
-            if ($cron->isDue()) {
+            if ($cron->isDue(now())) {
                 $this->executeRoutine($routine);
             }
         }

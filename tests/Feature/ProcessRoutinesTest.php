@@ -5,19 +5,17 @@ use App\Models\Group;
 use App\Models\Routine;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
-use function Pest\Laravel\artisan;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\NullOutput;
 
-// Manually manage database migrations and cleanup to avoid transaction isolation issues
-// with Artisan commands that modify the database
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
-    Artisan::call('migrate:fresh', ['--env' => 'testing', '--quiet' => true]);
     $this->user = User::factory()->create();
-});
-
-afterEach(function () {
-    Artisan::call('migrate:rollback', ['--env' => 'testing', '--quiet' => true]);
+    $this->command = new \App\Console\Commands\ProcessRoutines();
+    $this->command->setOutput(new OutputStyle(new ArrayInput([]), new NullOutput()));
 });
 
 
@@ -34,12 +32,12 @@ test('the command executes a due routine on a device', function () {
         'is_active' => true,
     ]);
 
-    artisan('app:process-routines');
+    $this->command->handle();
 
     $device->refresh();
     $this->assertDatabaseHas('devices', [
         'id' => $device->id,
-        'is_on' => true,
+        'is_on' => 1,
     ]);
 });
 
@@ -62,13 +60,13 @@ test('the command executes a due routine on a group', function () {
         'is_active' => true,
     ]);
 
-    artisan('app:process-routines');
+    $this->command->handle();
 
     foreach ($devices as $device) {
         $device->refresh();
         $this->assertDatabaseHas('devices', [
             'id' => $device->id,
-            'is_on' => false,
+            'is_on' => 0,
         ]);
     }
 });
@@ -86,12 +84,12 @@ test('the command does not execute a routine that is not due', function () {
         'is_active' => true,
     ]);
 
-    artisan('app:process-routines');
+    $this->command->handle();
 
     $device->refresh();
     $this->assertDatabaseHas('devices', [
         'id' => $device->id,
-        'is_on' => false, // Stays false
+        'is_on' => 0, // Stays false
     ]);
 });
 
@@ -108,11 +106,11 @@ test('the command does not execute an inactive routine', function () {
         'is_active' => false, // But inactive
     ]);
 
-    artisan('app:process-routines');
+    $this->command->handle();
 
     $device->refresh();
     $this->assertDatabaseHas('devices', [
         'id' => $device->id,
-        'is_on' => false, // Stays false
+        'is_on' => 0, // Stays false
     ]);
 });
