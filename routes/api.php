@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dashboard/voltage-history', [DashboardController::class, 'voltageHistory']);
 
     Route::apiResource('groups', GroupController::class);
+    Route::post('groups/{group}/unlink-device/{device}', [GroupController::class, 'unlinkDevice'])->name('groups.unlink-device');
     Route::post('devices/link', [DeviceController::class, 'link']);
     Route::apiResource('devices', DeviceController::class)->except(['store']);
     Route::apiResource('usage-goals', UsageGoalController::class);

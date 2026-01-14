@@ -32,6 +32,8 @@ class DeviceController extends Controller
     {
         $validated = $request->validate([
             'key' => 'required|string|exists:devices,key',
+            'name' => 'nullable|string|max:255',
+            'group_id' => 'nullable|exists:groups,id',
         ]);
 
         $device = Device::where('key', $validated['key'])->firstOrFail();
@@ -40,7 +42,11 @@ class DeviceController extends Controller
             return response()->json(['message' => 'Device is already linked.'], 422);
         }
 
-        $device->update(['user_id' => auth()->id()]);
+        $device->update([
+            'user_id' => auth()->id(),
+            'name' => $validated['name'] ?? $device->name,
+            'group_id' => $validated['group_id'] ?? null,
+        ]);
 
         return $device;
     }
@@ -79,7 +85,9 @@ class DeviceController extends Controller
      */
     public function destroy(Device $device)
     {
-        $device->delete();
+        $device->user_id = null;
+        $device->group_id = null;
+        $device->save();
 
         return response()->noContent();
     }

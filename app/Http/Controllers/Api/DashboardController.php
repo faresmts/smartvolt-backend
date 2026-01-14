@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\DeviceReading;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,20 +16,20 @@ class DashboardController extends Controller
      */
     public function summary(Request $request)
     {
-        $user = $request->user();
-        $deviceIds = $user->devices()->pluck('id');
+        $totalConsumption = $request->user()->devices()->sum('consumption');
 
-        $totalConsumptionLast30Days = DeviceReading::whereIn('device_id', $deviceIds)
-            ->where('created_at', '>=', now()->subDays(30))
-            ->sum('consumption');
-
-        $activeDevices = $user->devices()->where('is_on', true)->count();
-        $totalDevices = $user->devices()->count();
+        $topGroups = $request->user()->groups()
+            ->withSum('devices as total_consumption', 'consumption')
+            ->withCount(['devices', 'devices as devices_on_count' => function ($query) {
+                $query->where('is_on', true);
+            }])
+            ->orderByDesc('total_consumption')
+            ->limit(3)
+            ->get();
 
         return response()->json([
-            'total_consumption_kwh_last_30_days' => round($totalConsumptionLast30Days / 1000, 2),
-            'active_devices_count' => $activeDevices,
-            'total_devices_count' => $totalDevices,
+            'total_consumption' => $totalConsumption,
+            'top_groups' => $topGroups,
         ]);
     }
 
@@ -117,7 +116,7 @@ class DashboardController extends Controller
                 $dateFormat = 'Y-m-d';
                 $dbGrouping = $dbDriver === 'sqlite'
                     ? "strftime('%Y-%m-%d', created_at)"
-                    : "DATE(created_at)";
+                    : 'DATE(created_at)';
                 break;
             case '7d':
             default:
@@ -125,7 +124,7 @@ class DashboardController extends Controller
                 $dateFormat = 'Y-m-d';
                 $dbGrouping = $dbDriver === 'sqlite'
                     ? "strftime('%Y-%m-%d', created_at)"
-                    : "DATE(created_at)";
+                    : 'DATE(created_at)';
                 break;
         }
 

@@ -8,8 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-use Laravel\Fortify\TwoFactorAuthenticatable;
+    use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class User extends Authenticatable
 {
@@ -81,11 +82,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the usage goals for the user.
+     * Get the user's general usage goal.
      */
-    public function usageGoals(): HasMany
+    public function usageGoal(): MorphOne
     {
-        return $this->hasMany(UsageGoal::class);
+        return $this->morphOne(UsageGoal::class, 'goalable');
     }
 
     /**

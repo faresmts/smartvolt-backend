@@ -3,91 +3,88 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Group;
 use App\Models\UsageGoal;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UsageGoalController extends Controller
 {
-    /**
-     * Create the controller instance.
-     */
-    public function __construct()
+    // Common validation rules for goals
+    private function validateGoal(Request $request)
     {
-        $this->authorizeResource(UsageGoal::class, 'usage_goal');
-    }
-
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        return auth()->user()->usageGoals;
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'goalable_id' => 'required|integer',
-            'goalable_type' => 'required|string|in:App\Models\Device,App\Models\Group',
+        return $request->validate([
             'target_kwh' => 'required|numeric|min:0',
-            'period' => 'required|string|in:daily,weekly,monthly',
+            'period' => ['required', Rule::in(['daily', 'weekly', 'monthly'])],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
+    }
 
-        $goalable = $validated['goalable_type']::findOrFail($validated['goalable_id']);
-        if ($goalable->user_id !== auth()->id()) {
-            abort(403, 'You do not own this resource.');
-        }
+    // --- User Goal Methods ---
 
-        $usageGoal = UsageGoal::create([
-            'user_id' => auth()->id(),
-            'goalable_id' => $validated['goalable_id'],
-            'goalable_type' => $validated['goalable_type'],
-            'target_kwh' => $validated['target_kwh'],
-            'period' => $validated['period'],
-            'start_date' => $validated['start_date'],
-            'end_date' => $validated['end_date'],
-        ]);
-
-        return $usageGoal;
+    /**
+     * Display the user's general usage goal.
+     */
+    public function showUserGoal(Request $request)
+    {
+        $user = $request->user();
+        return $user->usageGoal;
     }
 
     /**
-     * Display the specified resource.
+     * Store or update the user's general usage goal.
      */
-    public function show(UsageGoal $usageGoal)
+    public function storeUserGoal(Request $request)
     {
-        return $usageGoal;
+        $validated = $this->validateGoal($request);
+        $user = $request->user();
+
+        $user->usageGoal()->updateOrCreate(
+            ['goalable_id' => $user->id, 'goalable_type' => get_class($user)],
+            [
+                'user_id' => $user->id,
+                'target_kwh' => $validated['target_kwh'],
+                'period' => $validated['period'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+            ]
+        );
+
+        return $user->usageGoal;
+    }
+
+    // --- Group Goal Methods ---
+
+    /**
+     * Display the specified group's usage goal.
+     */
+    public function showGroupGoal(Group $group)
+    {
+        $this->authorize('view', $group); // Ensure user can view the group
+        return $group->usageGoals()->where('user_id', auth()->id())->first();
     }
 
     /**
-     * Update the specified resource in storage.
+     * Store or update the specified group's usage goal.
      */
-    public function update(Request $request, UsageGoal $usageGoal)
+    public function storeGroupGoal(Request $request, Group $group)
     {
-        $validated = $request->validate([
-            'target_kwh' => 'sometimes|required|numeric|min:0',
-            'period' => 'sometimes|required|string|in:daily,weekly,monthly',
-            'start_date' => 'sometimes|required|date',
-            'end_date' => 'sometimes|required|date|after_or_equal:start_date',
-        ]);
+        $this->authorize('update', $group); // Ensure user can update the group
+        $validated = $this->validateGoal($request);
+        $user = $request->user();
 
-        $usageGoal->update($validated);
+        $group->usageGoals()->updateOrCreate(
+            ['goalable_id' => $group->id, 'goalable_type' => get_class($group)],
+            [
+                'user_id' => $user->id,
+                'target_kwh' => $validated['target_kwh'],
+                'period' => $validated['period'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+            ]
+        );
 
-        return $usageGoal;
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(UsageGoal $usageGoal)
-    {
-        $usageGoal->delete();
-
-        return response()->noContent();
+        return $group->usageGoals()->where('user_id', auth()->id())->first();
     }
 }
