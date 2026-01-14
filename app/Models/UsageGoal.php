@@ -23,8 +23,7 @@ class UsageGoal extends Model
         'goalable_type',
         'target_kwh',
         'period',
-        'start_date',
-        'end_date',
+        'name',
     ];
 
     /**

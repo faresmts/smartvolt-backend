@@ -5,12 +5,12 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
-    use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class User extends Authenticatable
 {
@@ -87,6 +87,14 @@ class User extends Authenticatable
     public function usageGoal(): MorphOne
     {
         return $this->morphOne(UsageGoal::class, 'goalable');
+    }
+
+    /**
+     * Get all usage goals for the user, regardless of goalable type.
+     */
+    public function allUsageGoals(): HasMany
+    {
+        return $this->hasMany(UsageGoal::class, 'user_id');
     }
 
     /**

@@ -22,6 +22,8 @@ class Device extends Model
         'user_id',
         'group_id',
         'key',
+        'ip_address',
+        'type',
         'is_on',
         'voltage',
         'consumption',
@@ -57,5 +59,13 @@ class Device extends Model
     public function routines(): MorphMany
     {
         return $this->morphMany(Routine::class, 'targetable');
+    }
+
+    /**
+     * Get the energy readings for the device.
+     */
+    public function energyReadings(): HasMany
+    {
+        return $this->hasMany(EnergyReading::class);
     }
 }

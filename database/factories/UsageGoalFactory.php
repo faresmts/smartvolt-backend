@@ -19,10 +19,9 @@ class UsageGoalFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'name' => $this->faker->sentence(3),
             'target_kwh' => $this->faker->randomFloat(2, 50, 500),
             'period' => $this->faker->randomElement(['daily', 'weekly', 'monthly']),
-            'start_date' => now(),
-            'end_date' => now()->addMonth(),
         ];
     }
 }
